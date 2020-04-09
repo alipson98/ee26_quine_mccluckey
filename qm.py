@@ -21,14 +21,49 @@ class Term:
         else:
             return False
 
+
 class Cube:
-    def __init__(self, terms):
+    def __init__(self, terms, binStr, order):
         self.terms = terms
-        self.n = math.log2(len(terms))
-        self.diffs = []
+        self.binStr = binStr
+        self.order = math.log2(len(terms))
         self.checked = False
+        self.terms.sort()
 
+    def __str__(self):
+        nums = ", ".join([str(num) for num in self.terms])
+        return f"m({nums}) = {self.binStr}"
+    
+    def __eq__(self, other):
+        if type(other) != Cube:
+            return False
+        
+        return (self.terms == other.terms and self.binStr == other.binStr)
+    
+    def comb(self, other):
+        if self == other: 
+            return None
 
+        diff = 0
+        combStr = ""
+
+        for i in range(len(self.binStr)):
+            if self.binStr[i] != other.binStr[i]:
+                combStr += "X"
+                diff += 1
+            else:
+                combStr += self.binStr[i]
+            
+            if diff > 1:
+                return None
+        
+        return Cube(self.terms + other.terms, combStr, self.order + 1)
+
+# strExtract
+# param: input string according to the input specifications
+# note that there can be no spaces in the input
+    # invalid input is an UNCHECKED RUNTIME ERROR
+# return: list of numerical minterms, list of numerical maxterms
 def strExtract(instring):
     bothStrings = instring.split('d')
     mString = bothStrings[0]
@@ -49,64 +84,13 @@ def strExtract(instring):
         minterms.append(int(mNums[i]))
     return minterms, dontCares
 
-def countOnes(n):
-    cnt = 0
-    while n != 0:
-        n = n & (n-1)
-        cnt += 1
+# def countOnes(n):
+#     cnt = 0
+#     while n != 0:
+#         n = n & (n-1)
+#         cnt += 1
     
-    return cnt
-
-def makeTable(minterms, dontcares, maxNum):
-    table = []
-    # print(maxNum)
-    for i in range(math.ceil(math.log2(maxNum)) + 1):
-        # print(i)
-        table.append([])
-
-    while minterms:
-        curr = minterms.pop()
-        term = Term(curr, False)
-        table[countOnes(curr)].append(term)
-
-    while dontcares:
-        curr = dontcares.pop()
-        term = Term(curr, True)
-        table[countOnes(curr)].append(term)
-    
-    for i in range(len(table)):
-        table[i] = sorted(table[i], key=lambda Term: Term.id)
-    
-    cubeTable = []
-    for i in range(math.ceil(math.log2(maxNum)) + 1):
-        cubeTable.append([])
-        for j in range(len(table[i])):
-            cubeTable[i].append(Cube(table[i][j]))
-
-    return cubeTable
-
-def canCombine(cube1, cube2):
-    if cube1.diffs:
-        diffsEqual = sorted(cube1.diffs) == sorted(cube2.diffs)
-
-    else:
-        diff = cube1.terms[0].id - cube2.terms[0].id
-        return countOnes(diff) == 1
-
-# combine cubes
-# args: table of cubes all of the same order
-# rets: list of PIs, list of next order cubes
-def combineCubes(table):
-    pis = []
-    for i in range(len(table) - 1):
-        for j in range(len(table[i])):
-            for k in range(len(table[i+1])):
-                if table[i][j].diffs:
-                    if 
-                print(k)
-
-
-    return pis
+#     return cnt
 
 def main():
     if path.exists("input.txt") == False:
@@ -123,9 +107,10 @@ def main():
         maxNum = max(minterms)
         if (dontcares and (max(dontcares) > max(minterms))):
             maxNum = max(dontcares)
-        qmTable = makeTable(minterms, dontcares, maxNum)
-        print(qmTable)
-        test = combineCubes(qmTable)
+        numVars = math.ceil(math.log2(maxNum))
+        # qmTable = makeTable(minterms, dontcares, maxNum)
+        # print(qmTable)
+        # test = combineCubes(qmTable)
     
 
 if __name__ == "__main__":
