@@ -8,6 +8,7 @@ import sys
 import string
 import re
 import math
+from itertools import chain, combinations
 
 # class Term:
 #     def __init__(self, id, dontcare):
@@ -157,6 +158,97 @@ def findPIs(table):
     
     return unused
 
+# given a reduced table, find the fewest number of PI's required to cover all
+# remaining terms
+# this isn't exactly Petrick's method. It minimizes the number of terms rather
+# than exact hardware cost, but it is a good approximation
+def solveReducedTable(pis, terms):
+    piPowerSet = list(chain.from_iterable(list(combinations(pis, r)) for r in range(1, len(pis)+1)))
+    minimalCover = None
+    for piSet in piPowerSet:
+        coveredTerms = [False for idx in range(len(terms))]
+        # coveredTerms = []
+        for pi in piSet:
+            for i in range(len(terms)):
+                if terms[i] in pi.terms:
+                    coveredTerms[i] = True
+        
+        
+        if all(coveredTerms):
+            if minimalCover == None:
+                minimalCover = piSet
+            elif len(piSet) < len(minimalCover):
+                minimalCover = piSet
+
+    minimalList = list(minimalCover)
+    
+    return minimalList
+
+def findMinimalCover(pis, terms):
+    # start by finding the essential PI's
+    essential = []
+    reducedPIs = pis
+    remainingTerms = terms
+    for term in terms:
+        count = 0
+        last = None
+        for cube in pis:
+            for t in cube.terms:
+                if t == term:
+                    count += 1
+                    last = cube
+                
+        if count == 1:
+            essential.append(last)
+            reducedPIs.remove(last)
+            # remainingTerms.remove(term)
+            for PIterm in last.terms:
+                if PIterm in remainingTerms:
+                    remainingTerms.remove(PIterm)
+    
+    # if reduced PI table is empty, just return the essential PIs
+    # print(essential)
+    if not reducedPIs:
+        return essential
+    
+    # otherwise, solve the reduced table
+    return essential + solveReducedTable(pis, terms)
+
+def printSOP(cubes, numVars):
+    outstr = "="
+    for cube in cubes:
+        currVar = 65 # ASCII 'A'
+        for i in range(numVars):
+            if cube.binStr[i] == "1":
+                outstr += chr(currVar)
+            elif cube.binStr[i] == "0":
+                outstr += chr(currVar) + "'"
+            currVar += 1
+        outstr += "+"
+    # print(cubes)
+    print(outstr[:-1])
+
+def printPOS(cubes, numVars):
+    outstr = "="
+    for cube in cubes:
+        # start = True
+        currVar = 65
+        outstr += "("
+        for i in range(numVars):
+            if cube.binStr[i] == "0":
+                outstr += chr(currVar) + "+"
+            elif cube.binStr[i] == "1":
+                outstr += chr(currVar) + "'+"
+            currVar += 1
+        outstr = outstr[:-1]
+        outstr += ")"
+
+    # print(cubes)
+    print(outstr)
+
+
+
+
 def main():
     if path.exists("input.txt") == False:
         print("input.txt not found! aborting...\n")
@@ -169,14 +261,32 @@ def main():
     for i in inlines:
         print(i)
         minterms, dontcares = strExtract(i)
+
         maxNum = max(minterms)
         if (dontcares and (max(dontcares) > max(minterms))):
             maxNum = max(dontcares)
         numVars = math.ceil(math.log2(maxNum))
-        qmTable = buildTable(sorted(minterms + dontcares), numVars)
-        # print(qmTable)
-        pis = findPIs(qmTable)
-        print(pis)
+
+        maxterms = []
+        for i in range(2 ** numVars):
+            if (i not in minterms) and (i not in dontcares):
+                maxterms.append(i)
+
+        
+        minQmTable = buildTable(sorted(minterms + dontcares), numVars)
+        minPIs = findPIs(minQmTable)
+        minEssential = findMinimalCover(minPIs, minterms)
+        printSOP(minEssential, numVars)
+
+
+        if maxterms:
+            maxQmTable = buildTable(sorted(maxterms + dontcares), numVars)
+            maxPIs = findPIs(maxQmTable)
+            maxEssential = findMinimalCover(maxPIs, maxterms)
+            printPOS(maxEssential, numVars)
+        
+        print("")
+        
     
 
 if __name__ == "__main__":
