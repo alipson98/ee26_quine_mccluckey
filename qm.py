@@ -254,40 +254,73 @@ def main():
         print("input.txt not found! aborting...\n")
         sys.exit(1)
 
-    fp = open("input.txt")
-    inlines = fp.read().splitlines()
-    fp.close()
+    if len(sys.argv) > 1:
+        filename = sys.argv[1]
+        fp = open(filename)
+        inlines = fp.read().splitlines()
+        fp.close()
 
-    for i in inlines:
-        print(i)
-        minterms, dontcares = strExtract(i)
+        for i in inlines:
+            print(i)
+            minterms, dontcares = strExtract(i)
 
-        maxNum = max(minterms)
-        if (dontcares and (max(dontcares) > max(minterms))):
-            maxNum = max(dontcares)
-        numVars = math.ceil(math.log2(maxNum))
+            maxNum = max(minterms)
+            if (dontcares and (max(dontcares) > max(minterms))):
+                maxNum = max(dontcares)
+            numVars = math.ceil(math.log2(maxNum))
 
-        maxterms = []
-        for i in range(2 ** numVars):
-            if (i not in minterms) and (i not in dontcares):
-                maxterms.append(i)
+            maxterms = []
+            for i in range(2 ** numVars):
+                if (i not in minterms) and (i not in dontcares):
+                    maxterms.append(i)
 
-        
-        minQmTable = buildTable(sorted(minterms + dontcares), numVars)
-        minPIs = findPIs(minQmTable)
-        minEssential = findMinimalCover(minPIs, minterms)
-        printSOP(minEssential, numVars)
+            
+            minQmTable = buildTable(sorted(minterms + dontcares), numVars)
+            minPIs = findPIs(minQmTable)
+            minEssential = findMinimalCover(minPIs, minterms)
+            printSOP(minEssential, numVars)
 
 
-        if maxterms:
-            maxQmTable = buildTable(sorted(maxterms + dontcares), numVars)
-            maxPIs = findPIs(maxQmTable)
-            maxEssential = findMinimalCover(maxPIs, maxterms)
-            printPOS(maxEssential, numVars)
-        
-        print("")
+            if maxterms:
+                maxQmTable = buildTable(sorted(maxterms + dontcares), numVars)
+                maxPIs = findPIs(maxQmTable)
+                maxEssential = findMinimalCover(maxPIs, maxterms)
+                printPOS(maxEssential, numVars)
+            
+            print("")
+    else:
+        print("No filename given. Reading from stdin")
+        print("Press ctrl+d (EOF) to exit")
+        for i in sys.stdin:
+            # i = input()
+            minterms, dontcares = strExtract(i)
+
+            maxNum = max(minterms)
+            if (dontcares and (max(dontcares) > max(minterms))):
+                maxNum = max(dontcares)
+            numVars = math.ceil(math.log2(maxNum))
+
+            maxterms = []
+            for i in range(2 ** numVars):
+                if (i not in minterms) and (i not in dontcares):
+                    maxterms.append(i)
+
+            
+            minQmTable = buildTable(sorted(minterms + dontcares), numVars)
+            minPIs = findPIs(minQmTable)
+            minEssential = findMinimalCover(minPIs, minterms)
+            printSOP(minEssential, numVars)
+
+
+            if maxterms:
+                maxQmTable = buildTable(sorted(maxterms + dontcares), numVars)
+                maxPIs = findPIs(maxQmTable)
+                maxEssential = findMinimalCover(maxPIs, maxterms)
+                printPOS(maxEssential, numVars)
+            
+            print("")
+
         
     
-
 if __name__ == "__main__":
     main()
