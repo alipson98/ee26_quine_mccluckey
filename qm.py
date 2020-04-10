@@ -249,9 +249,6 @@ def printPOS(cubes, numVars):
 # execute the program
 # process command line input, call necessary functions
 def main():
-    if path.exists("input.txt") == False:
-        print("input.txt not found! aborting...\n")
-        sys.exit(1)
 
     if len(sys.argv) > 1:
         filename = sys.argv[1]
