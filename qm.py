@@ -267,6 +267,8 @@ def main():
             if (dontcares and (max(dontcares) > max(minterms))):
                 maxNum = max(dontcares)
             numVars = math.ceil(math.log2(maxNum))
+            if (countOnes(maxNum) == 1):
+                numVars += 1
 
             maxterms = []
             for i in range(2 ** numVars):
