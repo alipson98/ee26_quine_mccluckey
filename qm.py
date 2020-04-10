@@ -2,7 +2,7 @@
 # Author: Adam Lipson
 # EE26 Spring 2020
 
-import os.path
+# import os.path
 from os import path
 import sys
 import string
@@ -10,28 +10,16 @@ import re
 import math
 from itertools import chain, combinations
 
-# class Term:
-#     def __init__(self, id, dontcare):
-#         self.id = id
-#         self.dontcare = dontcare
-#     def __repr__(self):
-#         return 'id:'+str(self.id) + ' dc: '+str(self.dontcare)
-#     def __eq__(self, other):
-#         if type(other) == Term:
-#             return self.id == other.id
-#         else:
-#             return False
-
 # Cube class
 # used for representing a group of terms in an n-cube
 # only method is for combining with another cube
 class Cube:
-    def __init__(self, terms, binStr, order, numVars):
-        self.terms = terms
-        self.binStr = binStr
-        self.order = math.log2(len(terms))
-        self.numVars = numVars
-        self.checked = False
+    def __init__(self, terms, binStr):
+        self.terms = terms # minterms of maxterms included in this cube
+        self.binStr = binStr # the binary representation of the cube 
+        self.checked = False # whether this cube has been combined in QM
+
+        # sort the terms when constructing
         self.terms.sort()
 
     def __repr__(self):
@@ -67,7 +55,7 @@ class Cube:
             if diff > 1:
                 return None
         
-        return Cube(self.terms + other.terms, combStr, self.order + 1, self.numVars)
+        return Cube(self.terms + other.terms, combStr)
 
 # strExtract
 # param: input string according to the input specifications
@@ -94,6 +82,7 @@ def strExtract(instring):
         minterms.append(int(mNums[i]))
     return minterms, dontCares
 
+# return the number of ones in the binary representation of an integer
 def countOnes(n):
     cnt = 0
     while n != 0:
@@ -108,6 +97,8 @@ def countOnes(n):
 def getBinary(n, numVars):
     return bin(n)[2:].rjust(numVars, '0')
 
+# build the initial PI table
+# takes a list of ints (terms) and the number of variable in the logic function
 def buildTable(terms, numVars):
     table = []
 
@@ -117,11 +108,11 @@ def buildTable(terms, numVars):
     
     for i in terms:
         idx = countOnes(i)
-        table[idx].append(Cube([i], getBinary(i, numVars), 0, numVars))
+        table[idx].append(Cube([i], getBinary(i, numVars)))
     
     return table
 
-# recursively find the PIs of a given list of terms
+# recursively find the PIs of a given list of cubes by combining them
 # returns a list of Cubes
 def findPIs(table):
     if len(table) == 1:
@@ -162,6 +153,7 @@ def findPIs(table):
 # remaining terms
 # this isn't exactly Petrick's method. It minimizes the number of terms rather
 # than exact hardware cost, but it is a good approximation
+# returns a list of Cubes
 def solveReducedTable(pis, terms):
     piPowerSet = list(chain.from_iterable(list(combinations(pis, r)) for r in range(1, len(pis)+1)))
     minimalCover = None
@@ -184,6 +176,11 @@ def solveReducedTable(pis, terms):
     
     return minimalList
 
+# given a list of PIs and the terms which they must cover, find the minimal close
+# cover
+# finds essential PIs and then finds the smallest set of PIs which covers remaining
+# terms
+# returns a list of Cubes
 def findMinimalCover(pis, terms):
     # start by finding the essential PI's
     essential = []
@@ -201,7 +198,6 @@ def findMinimalCover(pis, terms):
         if count == 1:
             essential.append(last)
             reducedPIs.remove(last)
-            # remainingTerms.remove(term)
             for PIterm in last.terms:
                 if PIterm in remainingTerms:
                     remainingTerms.remove(PIterm)
@@ -214,6 +210,8 @@ def findMinimalCover(pis, terms):
     # otherwise, solve the reduced table
     return essential + solveReducedTable(pis, terms)
 
+# given a list of cubes, print the 2-level logic in sum of products form
+# no return value
 def printSOP(cubes, numVars):
     outstr = "="
     for cube in cubes:
@@ -228,6 +226,8 @@ def printSOP(cubes, numVars):
     # print(cubes)
     print(outstr[:-1])
 
+# given a list of cubes, print the 2-level logic in product of sums form
+# no return value
 def printPOS(cubes, numVars):
     outstr = "="
     for cube in cubes:
@@ -246,9 +246,9 @@ def printPOS(cubes, numVars):
     # print(cubes)
     print(outstr)
 
-
-
-
+# main
+# execute the program
+# process command line input, call necessary functions
 def main():
     if path.exists("input.txt") == False:
         print("input.txt not found! aborting...\n")
