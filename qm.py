@@ -2,7 +2,6 @@
 # Author: Adam Lipson
 # EE26 Spring 2020
 
-# import os.path
 from os import path
 import sys
 import string
@@ -15,7 +14,7 @@ from itertools import chain, combinations
 # only method is for combining with another cube
 class Cube:
     def __init__(self, terms, binStr):
-        self.terms = terms # minterms of maxterms included in this cube
+        self.terms = terms # minterms or maxterms included in this cube
         self.binStr = binStr # the binary representation of the cube 
         self.checked = False # whether this cube has been combined in QM
 
